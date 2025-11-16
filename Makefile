@@ -12,24 +12,29 @@
 # .env 파일을 환경 변수로 로드합니다. (Docker Compose에서 자동으로 처리되므로, 개발 환경용)
 include .env
 
-# Poetry 가상 환경 초기 설정 및 의존성 설치 (처음 1회)
+# Poetry 가상 환경 초기 설정 및 의존성 업데이트 (의존성 바뀔때마다 재실행)
 setup:
 	@echo "✨ 0. Rust 컴파일러 설치 (tokenizers 빌드용)..."
 	@echo "--- 이 단계는 인터넷 연결이 필요하며, rustup이 설치되지 않은 경우에만 실행됩니다. ---"
 	/bin/bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . $$HOME/.cargo/env"
 	@echo "✅ Rust 설치 완료."
 	@echo "✨ 1. Poetry 가상 환경 설정 및 의존성 설치 중..."
-	@poetry env use 3.11
-	@poetry install
+	@cd backend && poetry env use 3.11 && poetry install
+	@echo "✅ poetry 설치 완료."
 
-# 🌟 Poetry 가상 환경 쉘 활성화 (재접속)
+# 🌟 Poetry 가상 환경 쉘 활성화 (가상환경 접속)
 shell:
-	@echo "🐚 Poetry 가상 환경 쉘로 진입합니다. (종료하려면 'exit' 입력)"
+	@echo "Poetry 가상 환경 쉘로 진입합니다. (종료하려면 'exit' 입력)"
+	@cp backend/pyproject.toml .
+	@cp backend/poetry.lock .
 	@poetry shell
+	@rm pyproject.toml
+	@rm poetry.lock
 
 # Docker 이미지 빌드
 build:
 	docker-compose build
+
 
 # 통합 서비스 실행 (DB, Backend)
 run:

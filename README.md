@@ -8,12 +8,12 @@
 ├── .env                                    # 공통 환경 변수 (DB 접속 정보)
 ├── docker-compose.yml                      # 통합 서비스 실행 설정
 ├── Makefile                                # 빌드/실행 자동화
-├── pyproject.toml                          # Poetry 의존성
-├── poetry.lock
 ├── README.md
 │
 ├── backend/                
 │   ├── Dockerfile                          # 백엔드 전용 이미지 빌드
+│   ├── pyproject.toml                      # Poetry 의존성
+│   ├── poetry.lock
 │   │
 │   └── app/                                # FastAPI 애플리케이션 코어
 │       ├── __init__.py
