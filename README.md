@@ -47,8 +47,16 @@
     └── (empty)
 ```
 
+# 3) 가상환경 세팅방법
+```bash
+# 1. Poetry 가상 환경 초기 설정 및 의존성 업데이트 (의존성 바뀔때마다 재실행)
+make setup
 
-# 3) 사용방법
+# 2. Poetry 가상 환경 쉘 활성화 (가상환경 접속)
+make shell
+```
+
+# 4) 사용방법
 ```bash
 # 1. Docker 이미지 빌드
 make build
@@ -56,19 +64,11 @@ make build
 # 2. Docker 서버 실행
 make run
 
-# 3. Docker 서버 중지 및 컨테이너 삭제
+# 3. Docker 서버 중지
 make stop
 
-# 4. Docker 이미지 정리
+# 4. Docker 볼륨 및 이미지 정리
 make clean
 
 ```
 
-# 4) 가상환경 세팅방법
-```bash
-# 1. Poetry 가상 환경 초기 설정 및 의존성 설치 (처음 1회)
-make setup
-
-# 2. Poetry 가상 환경 쉘 활성화 (재접속)
-make shell
-```

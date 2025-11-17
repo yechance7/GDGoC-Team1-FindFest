@@ -22,7 +22,7 @@ setup:
 	@cd backend && poetry env use 3.11 && poetry install
 	@echo "✅ poetry 설치 완료."
 
-# 🌟 Poetry 가상 환경 쉘 활성화 (가상환경 접속)
+# Poetry 가상 환경 쉘 활성화 (가상환경 접속)
 shell:
 	@echo "Poetry 가상 환경 쉘로 진입합니다. (종료하려면 'exit' 입력)"
 	@cp backend/pyproject.toml .
@@ -31,16 +31,19 @@ shell:
 	@rm pyproject.toml
 	@rm poetry.lock
 
+# --------------------------
+# 2. 서버 및 DB 실행
+# --------------------------
+
 # Docker 이미지 빌드
 build:
 	docker-compose build
-
 
 # 통합 서비스 실행 (DB, Backend)
 run:
 	docker-compose up --build -d
 
-# 서비스 중지
+# Docker 서버 중지
 stop:
 	docker-compose down
 

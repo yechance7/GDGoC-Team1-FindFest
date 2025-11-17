@@ -2,6 +2,7 @@
 
 # 의존성 및 환경 파일
 poetry.lock 
+pyproject.toml
 
 # 환경 변수 
 .env
