@@ -6,7 +6,7 @@ import logging
 from app.db.init_db import init_db
 from app.api import festival
 from app.core.config import settings
-from app.services.collect_event import fetch_page
+from app.services.collect_event import fetch_page, sync_seoul_events
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # 서버 시작 시: 데이터베이스 초기화 (테이블 생성 및 초기 데이터 삽입)
     logger.info("Initializing database...")
-    # init_db()
+    init_db()
     logger.info("Database initialization complete.")
     yield
     # 서버 종료 시: 필요한 정리 작업 수행 (없으면 생략 가능)
@@ -41,3 +41,14 @@ def read_root():
 @app.get("/seoul-events")
 def get_seoul_events():
     fetch_page(1, 2)
+
+@app.post("/sync-seoul-events")
+def sync_seoul_events_endpoint():
+    try:
+        saved = sync_seoul_events()
+        return {"message": "ok", "saved": saved}
+    except Exception as e:
+        # 에러를 FastAPI에만 던지지 말고 로그로도 남기기
+        logger.exception("Failed to sync seoul events: %s", e)
+        # 여기서 그냥 예외를 다시 던져도 되고, 에러 메시지 리턴해도 됨
+        raise
