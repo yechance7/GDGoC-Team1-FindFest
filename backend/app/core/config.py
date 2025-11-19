@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     SEOUL_EVENT_API_KEY: str   # 인증키
     SEOUL_EVENT_SERVICE: str = "culturalEventInfo"
     SEOUL_EVENT_TYPE: str = "json"
-    SEOUL_EVENT_PAGE_SIZE: int = 1000
+    SEOUL_EVENT_PAGE_SIZE: int = 5
 
     model_config = SettingsConfigDict(
         env_file=".env",
