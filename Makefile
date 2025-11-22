@@ -40,7 +40,7 @@ shell:
 build:
 	@cd backend && poetry lock
 	@cp backend/pyproject.toml .
-	@cp backend/poetry.lock .	
+	@cp backend/poetry.lock .
 	docker-compose build
 	@rm pyproject.toml
 	@rm poetry.lock
@@ -50,7 +50,7 @@ build:
 run:
 	docker-compose up --build -d
 	# sudo lsof -i :5432
-	# sudo kill -9 
+	# sudo kill -9
 
 # Docker 서버 중지
 stop:
