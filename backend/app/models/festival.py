@@ -36,4 +36,3 @@ class FestivalUpdate(BaseModel):
     category: Optional[str] = Field(None, max_length=50)
     price: Optional[str] = Field(None, max_length=100)
     image_url: Optional[str] = Field(None, max_length=500)
-
