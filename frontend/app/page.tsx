@@ -8,51 +8,48 @@ import EventList from "@/components/event-list"
 import ChatBot from "@/components/chat-bot"
 import LoginModal from "@/components/login-modal"
 import { eventsData, categories } from "@/lib/events-data"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Home() {
   const router = useRouter()
+  const { user, logout } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showChat, setShowChat] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [username, setUsername] = useState("")
   const [likedEvents, setLikedEvents] = useState<string[]>([])
 
+  // Check if login parameter is present in URL
   useEffect(() => {
-    const savedUsername = localStorage.getItem("username")
-    const savedLikes = localStorage.getItem("likedEvents")
-
-    if (savedUsername) {
-      setUsername(savedUsername)
-      setIsLoggedIn(true)
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('login') === 'true') {
+      setShowLoginModal(true)
     }
+  }, [])
 
+  // Load liked events from localStorage
+  useEffect(() => {
+    const savedLikes = localStorage.getItem("likedEvents")
     if (savedLikes) {
       setLikedEvents(JSON.parse(savedLikes))
     }
   }, [])
 
+  // Save liked events to localStorage
   useEffect(() => {
-    if (isLoggedIn) {
+    if (user) {
       localStorage.setItem("likedEvents", JSON.stringify(likedEvents))
     }
-  }, [likedEvents, isLoggedIn])
+  }, [likedEvents, user])
 
-  const handleLogin = (newUsername: string) => {
-    setUsername(newUsername)
-    setIsLoggedIn(true)
+  const handleLogin = () => {
     setShowLoginModal(false)
-    localStorage.setItem("username", newUsername)
   }
 
   const handleLogout = () => {
-    setUsername("")
-    setIsLoggedIn(false)
+    logout()
     setLikedEvents([])
-    localStorage.removeItem("username")
     localStorage.removeItem("likedEvents")
   }
 
@@ -79,8 +76,8 @@ export default function Home() {
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        isLoggedIn={isLoggedIn}
-        username={username}
+        isLoggedIn={!!user}
+        username={user?.username}
         onLogin={() => setShowLoginModal(true)}
         onLogout={handleLogout}
         onNavigateLiked={handleNavigateLiked}
@@ -137,8 +134,8 @@ export default function Home() {
             <EventList
               events={filteredEvents}
               likedEvents={likedEvents}
-              onToggleLike={isLoggedIn ? handleToggleLike : undefined}
-              isLoggedIn={isLoggedIn}
+              onToggleLike={user ? handleToggleLike : undefined}
+              isLoggedIn={!!user}
             />
           </div>
         </div>

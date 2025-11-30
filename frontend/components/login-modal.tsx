@@ -4,29 +4,28 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { login } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 
 interface LoginModalProps {
-  onLogin: (username: string) => void
+  onLogin: () => void
   onClose: () => void
 }
 
 export default function LoginModal({ onLogin, onClose }: LoginModalProps) {
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  const { login: authLogin } = useAuth()
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    if (!email || !password) {
+    if (!username || !password) {
       setError("모든 필드를 입력해주세요.")
-      return
-    }
-
-    if (!email.includes("@")) {
-      setError("유효한 이메일을 입력해주세요.")
       return
     }
 
@@ -35,8 +34,26 @@ export default function LoginModal({ onLogin, onClose }: LoginModalProps) {
       return
     }
 
-    const username = email.split("@")[0]
-    onLogin(username)
+    setIsLoading(true)
+
+    try {
+      // Call backend login API
+      const tokenResponse = await login({ username, password })
+      
+      // Save to auth context (this will automatically fetch user info)
+      await authLogin(tokenResponse.access_token)
+      
+      // Call the parent component's onLogin callback
+      onLogin()
+      
+      // Close the modal
+      onClose()
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -46,13 +63,14 @@ export default function LoginModal({ onLogin, onClose }: LoginModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">이메일</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">사용자 아이디</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="you@example.com"
+              placeholder="아이디를 입력하세요"
+              disabled={isLoading}
             />
           </div>
 
@@ -64,16 +82,22 @@ export default function LoginModal({ onLogin, onClose }: LoginModalProps) {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="••••••••"
+              disabled={isLoading}
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
 
           <button
             type="submit"
-            className="w-full py-2 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors"
+            disabled={isLoading}
+            className="w-full py-2 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            로그인
+            {isLoading ? "로그인 중..." : "로그인"}
           </button>
         </form>
 
@@ -97,7 +121,7 @@ export default function LoginModal({ onLogin, onClose }: LoginModalProps) {
           </button>
         </div>
 
-        <p className="text-slate-400 text-xs mt-4 text-center">이메일과 비밀번호를 입력해주세요 (최소 6자 이상)</p>
+        <p className="text-slate-400 text-xs mt-4 text-center">사용자 아이디와 비밀번호를 입력해주세요 (최소 6자 이상)</p>
       </div>
     </div>
   )
