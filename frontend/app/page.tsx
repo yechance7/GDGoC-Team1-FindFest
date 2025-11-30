@@ -8,12 +8,12 @@ import EventList from "@/components/event-list"
 import ChatBot from "@/components/chat-bot"
 import LoginModal from "@/components/login-modal"
 import { categories, convertSeoulEventsToEvents, type Event } from "@/lib/events-data"
-import { getSeoulEvents } from "@/lib/api"
+import { getSeoulEvents, getLikedSeoulEvents, likeSeoulEvent, unlikeSeoulEvent } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 
 export default function Home() {
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -58,20 +58,28 @@ export default function Home() {
     }
   }, [])
 
-  // Load liked events from localStorage
+  // Load liked events from backend when user logs in
   useEffect(() => {
-    const savedLikes = localStorage.getItem("likedEvents")
-    if (savedLikes) {
-      setLikedEvents(JSON.parse(savedLikes))
+    if (user && token) {
+      fetchLikedEvents()
+    } else {
+      setLikedEvents([])
     }
-  }, [])
+  }, [user, token])
 
-  // Save liked events to localStorage
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("likedEvents", JSON.stringify(likedEvents))
+  const fetchLikedEvents = async () => {
+    if (!token) return
+
+    try {
+      const seoulEvents = await getLikedSeoulEvents(token)
+      // Store just the IDs as strings to match the existing format
+      const likedIds = seoulEvents.map(e => String(e.id))
+      setLikedEvents(likedIds)
+    } catch (err) {
+      console.error("Failed to fetch liked events:", err)
+      // Don't show error to user on main page, just log it
     }
-  }, [likedEvents, user])
+  }
 
   const handleLogin = () => {
     setShowLoginModal(false)
@@ -80,11 +88,28 @@ export default function Home() {
   const handleLogout = () => {
     logout()
     setLikedEvents([])
-    localStorage.removeItem("likedEvents")
   }
 
-  const handleToggleLike = (eventId: string) => {
-    setLikedEvents((prev) => (prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId]))
+  const handleToggleLike = async (eventId: string) => {
+    if (!token) return
+
+    try {
+      const numericEventId = Number(eventId)
+      
+      if (likedEvents.includes(eventId)) {
+        // Unlike the event
+        await unlikeSeoulEvent(numericEventId, token)
+        setLikedEvents((prev) => prev.filter((id) => id !== eventId))
+      } else {
+        // Like the event
+        await likeSeoulEvent(numericEventId, token)
+        setLikedEvents((prev) => [...prev, eventId])
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err)
+      // Optionally show error to user
+      alert("찜하기 상태를 변경하는데 실패했습니다. 다시 시도해주세요.")
+    }
   }
 
   const handleNavigateLiked = () => {
