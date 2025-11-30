@@ -84,6 +84,26 @@ def get_calendar_event_counts(
     event_counts = repo.get_calendar_event_counts(year, month)
     return event_counts
 
+@router.get("/liked/all", response_model=List[SeoulEventResponse])
+def get_user_liked_events(
+    skip: int = Query(0, ge=0, description="페이징 오프셋"),
+    limit: int = Query(100, ge=1, le=500, description="페이징 리밋"),
+    current_user: User = Depends(get_current_user),
+    like_repo: SeoulEventLikeRepository = Depends(get_seoul_event_like_repo)
+):
+    """
+    사용자가 찜한 이벤트 목록 조회
+
+    - **skip**: 페이징 오프셋
+    - **limit**: 페이징 리밋
+    - **인증 필요**: Bearer 토큰
+
+    Returns: 사용자가 찜한 이벤트 목록 (최근 찜한 순서대로)
+    """
+    logger.info(f"Fetching liked events for user {current_user.id}")
+    events = like_repo.get_user_liked_events(current_user.id, skip=skip, limit=limit)
+    return events
+
 @router.get("/{event_id}", response_model=SeoulEventResponse)
 def read_seoul_event(
     event_id: int,

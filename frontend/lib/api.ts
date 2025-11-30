@@ -306,3 +306,21 @@ export async function checkSeoulEventLiked(eventId: number, token: string): Prom
   );
 }
 
+/**
+ * Get all liked Seoul events for the current user (requires authentication)
+ * @param token - Access token
+ * @param skip - Number of events to skip (for pagination)
+ * @param limit - Maximum number of events to return
+ * @returns List of liked Seoul events
+ */
+export async function getLikedSeoulEvents(token: string, skip: number = 0, limit: number = 100): Promise<SeoulEventResponse[]> {
+  return apiRequest<SeoulEventResponse[]>(
+    `${API_BASE_URL}/api/v1/seoul-events/liked/all?skip=${skip}&limit=${limit}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }
+  );
+}
+
