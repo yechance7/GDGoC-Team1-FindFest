@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
+import { signup } from "@/lib/api"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function SignupPage() {
   })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -24,13 +26,18 @@ export default function SignupPage() {
     setError("")
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     // Validation
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       setError("모든 필드를 입력해주세요.")
+      return
+    }
+
+    if (formData.username.length < 3 || formData.username.length > 50) {
+      setError("아이디는 3자에서 50자 사이여야 합니다.")
       return
     }
 
@@ -49,11 +56,28 @@ export default function SignupPage() {
       return
     }
 
-    // Simulate account creation
-    setSuccess(true)
-    setTimeout(() => {
-      router.push("/")
-    }, 2000)
+    setIsLoading(true)
+
+    try {
+      // Call backend signup API
+      await signup({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      })
+
+      // Show success message
+      setSuccess(true)
+      
+      // Redirect to home page after 2 seconds
+      setTimeout(() => {
+        router.push("/")
+      }, 2000)
+    } catch (err) {
+      console.error('Signup error:', err)
+      setError(err instanceof Error ? err.message : "회원가입에 실패했습니다.")
+      setIsLoading(false)
+    }
   }
 
   if (success) {
@@ -88,14 +112,15 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">사용자 이름</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">아이디</label>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="홍길동"
+              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="findfest"
+              disabled={isLoading}
             />
           </div>
 
@@ -106,8 +131,9 @@ export default function SignupPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="you@example.com"
+              disabled={isLoading}
             />
           </div>
 
@@ -118,8 +144,9 @@ export default function SignupPage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="••••••••"
+              disabled={isLoading}
             />
           </div>
 
@@ -130,8 +157,9 @@ export default function SignupPage() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 bg-slate-700 text-white placeholder-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="••••••••"
+              disabled={isLoading}
             />
           </div>
 
@@ -143,16 +171,17 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            className="w-full py-2 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors"
+            disabled={isLoading}
+            className="w-full py-2 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            계정 만들기
+            {isLoading ? "계정 생성 중..." : "계정 만들기"}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-slate-400 text-sm">
             이미 계정이 있으신가요?{" "}
-            <Link href="/" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+            <Link href="/?login=true" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
               로그인
             </Link>
           </p>

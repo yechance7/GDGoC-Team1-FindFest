@@ -6,36 +6,33 @@ import Header from "@/components/header"
 import EventList from "@/components/event-list"
 import LoginModal from "@/components/login-modal"
 import { eventsData } from "@/lib/events-data"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function LikedPage() {
   const router = useRouter()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [username, setUsername] = useState("")
+  const { user, logout } = useAuth()
   const [likedEvents, setLikedEvents] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showLoginModal, setShowLoginModal] = useState(false)
 
+  // Redirect to home if not logged in
   useEffect(() => {
-    const savedUsername = localStorage.getItem("username")
-    const savedLikes = localStorage.getItem("likedEvents")
-
-    if (savedUsername) {
-      setUsername(savedUsername)
-      setIsLoggedIn(true)
-    } else {
+    if (!user) {
       router.push("/")
     }
+  }, [user, router])
 
+  // Load liked events from localStorage
+  useEffect(() => {
+    const savedLikes = localStorage.getItem("likedEvents")
     if (savedLikes) {
       setLikedEvents(JSON.parse(savedLikes))
     }
-  }, [router])
+  }, [])
 
   const handleLogout = () => {
-    setUsername("")
-    setIsLoggedIn(false)
+    logout()
     setLikedEvents([])
-    localStorage.removeItem("username")
     localStorage.removeItem("likedEvents")
     router.push("/")
   }
@@ -65,8 +62,8 @@ export default function LikedPage() {
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        isLoggedIn={isLoggedIn}
-        username={username}
+        isLoggedIn={!!user}
+        username={user?.username}
         onLogin={() => setShowLoginModal(true)}
         onLogout={handleLogout}
         onNavigateLiked={handleNavigateLiked}
@@ -74,11 +71,7 @@ export default function LikedPage() {
 
       {showLoginModal && (
         <LoginModal
-          onLogin={(newUsername) => {
-            setUsername(newUsername)
-            setIsLoggedIn(true)
-            setShowLoginModal(false)
-          }}
+          onLogin={() => setShowLoginModal(false)}
           onClose={() => setShowLoginModal(false)}
         />
       )}
@@ -95,7 +88,7 @@ export default function LikedPage() {
           events={likedEventsList}
           likedEvents={likedEvents}
           onToggleLike={handleToggleLike}
-          isLoggedIn={isLoggedIn}
+          isLoggedIn={!!user}
         />
       </div>
     </main>
