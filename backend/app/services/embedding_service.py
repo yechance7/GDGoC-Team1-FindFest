@@ -1,6 +1,7 @@
 # backend/app/services/embedding_service.py
 
 import os
+import asyncio
 from typing import List, Optional
 from app.core.config import settings
 import json
@@ -33,25 +34,35 @@ class EmbeddingService:
             "input_type": "document"
         }
 
-        # 비동기 클라이언트 사용 (타임아웃 설정)
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            try:
-                # await을 사용하여 비동기 POST 요청
-                response = await client.post(self.api_endpoint_url, headers=headers, json=data) 
-                response.raise_for_status() 
+        # 429 방지: 간단한 재시도/지연 로직 추가
+        for attempt in (1, 2, 3):
+            # 비동기 클라이언트 사용 (타임아웃 설정)
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                try:
+                    response = await client.post(self.api_endpoint_url, headers=headers, json=data)
+                    response.raise_for_status()
 
-                result = response.json()
-                
-                if result.get('data') and result['data'][0].get('embedding'):
-                    return result['data'][0]['embedding']
-                
-                print(f"임베딩 API 응답에 벡터 데이터가 없습니다: {result}")
-                return None
+                    result = response.json()
+                    
+                    if result.get('data') and result['data'][0].get('embedding'):
+                        return result['data'][0]['embedding']
+                    
+                    print(f"임베딩 API 응답에 벡터 데이터가 없습니다: {result}")
+                    return None
 
-            except httpx.RequestError as e:
-                print(f"Upstage Solar API 호출 오류 발생: {e}")
-                # 응답 객체가 없을 수 있으므로 response.status_code 및 response.text 출력은 제외
-                return None
-            except Exception as e:
-                print(f"임베딩 생성 중 알 수 없는 오류 발생: {e}")
-                return None
+                except httpx.HTTPStatusError as e:
+                    status = e.response.status_code if e.response else None
+                    if status == 429 and attempt < 3:
+                        # 너무 많은 요청: 짧게 대기 후 재시도
+                        await asyncio.sleep(3 * attempt)
+                        continue
+                    print(f"Upstage Solar API HTTP 오류 발생 (status={status}): {e}")
+                    return None
+                except httpx.RequestError as e:
+                    print(f"Upstage Solar API 호출 오류 발생: {e}")
+                    return None
+                except Exception as e:
+                    print(f"임베딩 생성 중 알 수 없는 오류 발생: {e}")
+                    return None
+
+        return None

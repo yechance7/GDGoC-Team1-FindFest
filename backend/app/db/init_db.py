@@ -22,3 +22,7 @@ def init_db():
         print(f"DB 초기화 중 오류 발생: {e}")
     finally:
         db.close()
+
+
+if __name__ == "__main__":
+    init_db()
