@@ -3,6 +3,8 @@ from app.db.database import engine, Base, SessionLocal
 from app.entity.seoul_event_entity import SeoulEvent
 from app.entity.user_entity import User
 from app.entity.seoul_event_like_entity import SeoulEventLike
+from app.entity.conversation_entity import Conversation
+from app.entity.message_entity import Message
 from datetime import date
 from sqlalchemy import text
 
@@ -22,3 +24,7 @@ def init_db():
         print(f"DB 초기화 중 오류 발생: {e}")
     finally:
         db.close()
+
+
+if __name__ == "__main__":
+    init_db()

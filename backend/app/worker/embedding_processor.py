@@ -51,7 +51,7 @@ async def _async_process_embeddings(embedding_service: EmbeddingService):
             tasks = []
             for event in events_to_embed:
                 text_chunk = event.get_rag_chunk()
-                tasks.append(embedding_service.create_db_embedding(text_chunk)) 
+                tasks.append(embedding_service.db_embedding(text_chunk)) 
 
             results = await asyncio.gather(*tasks, return_exceptions=True) 
             
